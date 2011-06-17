@@ -3,10 +3,10 @@
 
 	return array (
 		'modules' => array(
-			'faker' => array(
+			'eorm' => array(
 				'enabled' => TRUE,
-				'name' => 'Faker',
-				'description' => 'Fake Data Generator',
+				'name' => 'EORM',
+				'description' => 'Extended ORM',
 				'copyright' => '&copy; 2011 John Hobbs',
 			)
 		)
