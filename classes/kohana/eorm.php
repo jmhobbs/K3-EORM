@@ -15,7 +15,7 @@
 		Get it?
 
 	**/
-	class Kohana_EORM extends ORM {
+	class Kohana_EORM extends Kohana_ORM {
 
 		public function all() { return $this->find_all(); }
 

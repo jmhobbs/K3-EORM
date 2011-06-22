@@ -79,3 +79,21 @@ When you call "can( [action], [user] )" on an EORM_Auth object, it checks if the
 1. Checking for a method named "can_[action]" and calls it if found (it should return boolean )
 2. Checking the $auth array for Auth ORM roles, and seeing if the user has them
 
+Tips & Tricks
+-------------
+
+### Playing nice with ORM Auth
+
+By default, EORM doesn't get included in the inheritance tree for Model_Auth_User when you are
+using ORM Auth.  There is an easy fix for this!
+
+Just create a file at application/classes/orm.php like this one:
+
+    <?php
+    
+      class ORM extends EORM {}
+
+This works because EORM sub-classes Kohana_ORM instead of just ORM, while Model_Auth_User just 
+extends ORM.
+
+
