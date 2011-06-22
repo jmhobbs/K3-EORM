@@ -29,7 +29,7 @@ The first() method is an alias for find()
 
     ORM::factory( 'user' )->first();
 
-### Functions as properties
+### Methods as properties
 
 Additionally, you can add get methods to EORM models to access methods as properties.
 
@@ -48,6 +48,65 @@ Additionally, you can add get methods to EORM models to access methods as proper
     
     // Print's "the-post-slug"
     echo $model->link;
+
+### A more capable as_array
+
+As array has been given three new, optional arguments: $only, $include, and $exclude.
+
+If you call as_array on an object with $only set to an array of property names, only those 
+properties will be returned in the array. This also applies to properties implemented with
+get_method's.  Providing this option overrides all the other output.
+
+If you call as_array with $include set to an array, you will add those properties to the array.
+This is mostly only useful to include properties implemented by methods.
+
+If you call as_array with $exclude set to an array, those properties will be excluded.
+
+Additionally, there are two new properties, $_as_array_include and $_as_array_exclude.  These
+behave as default values for $include and $exclude respectively.
+
+The order of priority for processing is as follows, with the most authoratative on top:
+
+1. $only
+2. $exclude
+3. $include
+4. $this->_as_array_exclude
+5. $this->_as_array_include
+
+#### Examples
+
+    //  CREATE TABLE `posts` (
+    //    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    //    `title` varchar(255) NOT NULL,
+    //    `body` text NOT NULL,
+    //    PRIMARY KEY  ( `id` )
+    //  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+    class Model_Post extends EORM {
+
+      protected $_as_array_exclude = array( 'id' );
+
+      public function get_slug () { return url::title( $this->title ); }
+
+    }
+
+    $post = ORM::factory( 'post' );
+    $post->title = 'Test Post';
+    $post->body = 'Hello, world!';
+    $post->save();
+    $post->reload();
+
+    // [ 'title' => 'Test Post', 'body' => 'Hello, world!' ]
+    $post->as_array();
+
+    // [ 'id' => 1 ]
+    $post->as_array( array( 'id' ) );
+
+    // [ 'id' => 1, 'slug' => 'test-post', 'title' => 'Test Post', 'body' => 'Hello, world!' ]
+    $post->as_array( null, array( 'id', 'slug' ) );
+
+    // [ 'slug' => 'test-post', 'title' => 'Test Post' ]
+    $post->as_array( null, array( 'slug' ), array( 'body' ) );
 
 ### Action/Role based access control with EORM_Auth
 
