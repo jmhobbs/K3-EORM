@@ -62,16 +62,16 @@ This is mostly only useful to include properties implemented by methods.
 
 If you call as_array with $exclude set to an array, those properties will be excluded.
 
-Additionally, there are two new properties, $_as_array_include and $_as_array_exclude.  These
-behave as default values for $include and $exclude respectively.
+Additionally, there are two new methods, as_array_include and as_array_exclude.  These
+return arrays which behave as default values for $include and $exclude respectively.
 
 The order of priority for processing is as follows, with the most authoratative on top:
 
 1. $only
 2. $exclude
 3. $include
-4. $this->_as_array_exclude
-5. $this->_as_array_include
+4. $this->as_array_exclude
+5. $this->as_array_include
 
 #### Examples
 
@@ -84,7 +84,7 @@ The order of priority for processing is as follows, with the most authoratative 
 
     class Model_Post extends EORM {
 
-      protected $_as_array_exclude = array( 'id' );
+      public function as_array_exclude () { return array( 'id' ); }
 
       public function get_slug () { return url::title( $this->title ); }
 
@@ -107,6 +107,53 @@ The order of priority for processing is as follows, with the most authoratative 
 
     // [ 'slug' => 'test-post', 'title' => 'Test Post' ]
     $post->as_array( null, array( 'slug' ), array( 'body' ) );
+
+### Protect From Mass Assignment
+
+When using [ORM::values] the only value that is not overridden by default is the primary key.  A new method [EORM::protect_from_mass_assignment]
+returns an array of field names which will be filtered out of the values array for that they will not be set.
+
+    class Model_Test extends EORM {
+    
+    	public function protect_from_mass_assignment () { return array( 'lol' ); }
+    
+    }
+    
+    $test = ORM::factory( 'test' );
+    $test->lol = 'lawl';
+    
+    $test->values( array( 'lol' => 'rofl' ) );
+    
+    // prints 'lawl'
+    print $test->lol;
+
+### Scopes
+
+Scopes are pre-set query clauses.  A good example is for a soft deleted model.  When doing a normal selection, you only want to show
+not yet deleted objects.  So you write a scope for it and set it as the default.  Scopes are just methods prefixed with 'scope_'.
+
+    class Model_SoftDelete {
+    
+    	public function default_scopes () { return array( 'not_deleted' ); }
+    
+    	public function scope_not_deleted () {
+    		return $this->where( 'deleted', 'IS', NULL );
+    	}
+    
+    	public function scope_deleted () {
+    		return $this->where( 'deleted', 'IS NOT', NULL );
+    	}
+    
+    }
+    
+    // Selects all the not-deleted objects (because of default_scopes)
+    $objects = ORM::factory( 'softdelete' )->all();
+    
+    // Selects all the objects, no scope at all
+    $objects = ORM::factory( 'softdelete' )->unscope()->all();
+    
+    // Selects all the deleted objects
+    $objects = ORM::factory( 'softdelete' )->unscope()->scope( 'deleted' )->all();
 
 ### Action/Role based access control with EORM_Auth
 
@@ -133,7 +180,7 @@ The EORM_Auth class allows you to do some basic access controls in conjunction w
       // show delete form
     }
 
-When you call "can( [action], [user] )" on an EORM_Auth object, it checks if the given user can dothe provided action by:
+When you call "can( [action], [user] )" on an EORM_Auth object, it checks if the given user can do the provided action by:
 
 1. Checking for a method named "can_[action]" and calls it if found (it should return boolean )
 2. Checking the $auth array for Auth ORM roles, and seeing if the user has them
