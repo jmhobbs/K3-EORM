@@ -70,8 +70,8 @@ The order of priority for processing is as follows, with the most authoratative 
 1. $only
 2. $exclude
 3. $include
-4. $this->as_array_exclude
-5. $this->as_array_include
+4. $this->as_array_exclude()
+5. $this->as_array_include()
 
 #### Examples
 

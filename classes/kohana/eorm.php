@@ -11,6 +11,59 @@
 	class Kohana_EORM extends Kohana_ORM {
 
 		/**
+		 * Place to hold errors.
+		 *
+		 *     $model->errors = ORM_Validation_Exception->errors();
+		 */
+		public $errors = array();
+
+		/**
+		 * Check if a field has an error on it.
+		 *
+		 * @param string The name of the column you want to check.
+		 * @param string The name of the validation group you want to check
+		 * 
+		 * @return boolean True if there is an error for this field.
+		 */
+		public function has_error( $name, $set = null ) {
+			return ! is_null( $this->get_error( $name, $set ) );
+		}
+
+		/**
+		 * Get an error message for this object.
+		 *
+		 * @param string The name of the column you want to get an error for.
+		 * @param string The name of the validation group you want to get an error for (optional)
+		 * 
+		 * @return mixed Returns the error messge if one exists, or null otherwise.
+		 */
+		public function get_error( $name, $set = null ) {
+			if( ! is_null( $set ) ) {
+				$set = arr::get( $this->errors, $set, array() );
+				return arr::get( $set, $name, null );
+			}
+			else {
+				return arr::get( $this->errors, $name, null );
+			}
+		}
+
+		/*!
+			Have any of the columns on this model been changed?
+
+			\returns Boolean True if any column has changed.
+		*/
+		public function has_changed () { return 0 < count( $this->changed() ); }
+
+		/** Anything in an array here will be included in as_array responses. */
+		protected $_as_array_include = null;
+
+		/** Anthing in an array here will be excluded from as_array responses. */
+		protected $_as_array_exclude = null;
+
+		/** Anything in this array can not be mass assigned with ORM::values */
+		protected $_protect_from_mass_assignment = array();
+
+		/**
 		 * Alias for [ORM::find_all]
 		 */
 		public function all() { return $this->find_all(); }
@@ -60,8 +113,6 @@
 			return parent::__unset( $name );
 		}
 
-
-		/************************************************************/
 
 		/**
 		 * Fields to include in all calls to [ORM::as_array].
@@ -130,8 +181,6 @@
 			return $array;
 		}
 
-		/************************************************************/
-
 		/**
 		 * Fields to prevent mass assignment through [ORM::values].
 		 */
@@ -160,7 +209,6 @@
 			return parent::values( $values, $expected );
 		}
 
-		/************************************************************/
 
 		/**
 		 * Scopes that have not been applied to the query.
@@ -169,18 +217,10 @@
 		protected $_scopes_pending = array();
 
 		/**
-		 * Get the names of the currently applied scopes.
-		 * @return array
-		 */
-		public function scopes () {
-			return $this->_scopes_pending();
-		}
-
-		/**
 		 * Names of the default scopes.
 		 * @return array
 		 */
-		public function default_scopes () {
+		public function scopes () {
 			return array();
 		}
 
@@ -213,7 +253,7 @@
 		}
 
 		protected function _initialize() {
-			$this->_scopes_pending = $this->default_scopes();
+			$this->_scopes_pending = $this->scopes();
 			return parent::_initialize();
 		}
 
@@ -221,7 +261,7 @@
 			foreach( $this->_scopes_pending as $scope ) {
 				call_user_func( array( $this, 'scope_' . $scope ) );
 			}
-			$this->_scopes_pending = $this->default_scopes(); // Reset scopes
+			$this->_scopes_pending = $this->scopes(); // Reset scopes
 			return parent::_build( $type );
 		}
 
